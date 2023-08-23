@@ -16,10 +16,10 @@ class Forecast {
   }
 }
 
-app.get('/weather', (req, res) => {
-  console.log('Asking for Weather', req.query);
-  res.send('weatherData');
-});
+// app.get('/weather', (req, res) => {
+//   console.log('Asking for Weather', req.query);
+//   res.send('weatherData');
+// });
 
 app.get('/weather', (req, res) => {
   const { lat, lon, searchQuery } = req.query;

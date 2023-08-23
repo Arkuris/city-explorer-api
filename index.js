@@ -16,7 +16,8 @@ class Forecast {
   }
 }
 
-app.get('/', (req, res) => {
+app.get('/weather', (req, res) => {
+  console.log('Asking for Weather', req.query);
   res.send('weatherData');
 });
 

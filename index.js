@@ -18,7 +18,7 @@ class Forecast {
 
 app.get('/', (req, res) => {
   res.send('weatherData');
-});a
+});
 
 app.get('/weather', (req, res) => {
   const { lat, lon, searchQuery } = req.query;

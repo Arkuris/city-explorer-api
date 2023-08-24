@@ -18,7 +18,8 @@ class Forecast {
 }
 
 async function locationWeather(lat, lon) {
-  const currentWeather = `https://api.weatherbit.io/v2.0/current/forecast/daily?key=${WEATHERBIT_API_KEY}&lat=${lat}&lon=${lon}&units=I&days=7`;
+  console.log(lat, lon, WEATHERBIT_API_KEY);
+  const currentWeather = `http://api.weatherbit.io/v2.0/forecast/daily?key=${WEATHERBIT_API_KEY}&lat=${lat}&lon=${lon}`;
   let weatherResponse = await axios.get(`${currentWeather}`);
   return weatherResponse.data;
 }
@@ -29,17 +30,23 @@ function weatherApiData(weather) {
   for (let i=0; i<weather.data.length; i++) {
     const datetime = weather.data[i].datetime;
     console.log(datetime);
-    forecastData.push(new Forecast(datetime));
+    forecastData.push(new Forecast(weather.data[i].weather.description, datetime));
   }
   return forecastData;
 }
-app.get('/weather', async (request, response) => {
-  if (!request.query.city || !request.query.lat || !request.query.lon) {
-    response.status(400).send('Please follow parameters');
+app.get('/weather', async (req, res) => {
+  if (!req.query.lat || !req.query.lon) {
+    res.status(400).send('Please follow parameters');
   } else {
-    let weatherData = await locationWeather(request.query.lat, request.query.lon);
-    let formattedWeatherForecast = weatherApiData(weatherData);
-    response.status(200).send(formattedWeatherForecast);
+    try {
+      let weatherData = await locationWeather(req.query.lat, req.query.lon);
+      console.log(weatherData);
+      let apiWeatherForecast = weatherApiData(weatherData);
+      res.status(200).send(apiWeatherForecast);
+    } catch (error) {
+      console.log(error);
+      res.status(500).send('Error fetching weather data');
+    }
   }
 });
 

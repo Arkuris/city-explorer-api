@@ -6,6 +6,7 @@ const cors = require('cors');
 // const weatherData = require(`./data/weather.json`);
 dotenv.config();
 const PORT = process.env.PORT;
+const MOVIE_API_kEY = process.env.MOVIE_API_kEY;
 const WEATHERBIT_API_KEY = process.env.WEATHERBIT_API_KEY;
 const app = express();
 app.use(cors());
@@ -29,8 +30,12 @@ function weatherApiData(weather) {
 
   for (let i=0; i<weather.data.length; i++) {
     const datetime = weather.data[i].datetime;
-    console.log(datetime);
-    forecastData.push(new Forecast(weather.data[i].weather.description, datetime));
+    const atmosphere = weather.data[i].weather.description;
+    const lowTemp = weather.data[i].low_temp;
+    const highTemp = weather.data[i].high_temp;
+    // let weatherObject = weather.data[i].weather;
+    // console.log(weatherObject);
+    forecastData.push(new Forecast(`${datetime} It will be ${atmosphere} with a high of ${highTemp}, and low of ${lowTemp}`));
   }
   return forecastData;
 }
@@ -53,5 +58,4 @@ app.get('/weather', async (req, res) => {
 app.listen(PORT, () => {
   console.log('App running.');
 });
-
 

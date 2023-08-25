@@ -1,40 +1,61 @@
 'use strict';
-const dotenv = require('dotenv');
+const axios = require('axios');
 const express = require('express');
-const app = express();
-const weatherData = require('./data/weather.json');
-
-console.log(weatherData, 'We found Weather!');
-
+const dotenv = require('dotenv');
+const cors = require('cors');
+// const weatherData = require(`./data/weather.json`);
 dotenv.config();
 const PORT = process.env.PORT;
+const MOVIE_API_kEY = process.env.MOVIE_API_kEY;
+const WEATHERBIT_API_KEY = process.env.WEATHERBIT_API_KEY;
+const app = express();
+app.use(cors());
 
 class Forecast {
-  constructor(date, description) {
-    this.date = date;
+  constructor(description, date) {
     this.description = description;
+    this.date = date;
   }
 }
 
-// app.get('/weather', (req, res) => {
-//   console.log('Asking for Weather', req.query);
-//   res.send('weatherData');
-// });
+async function locationWeather(lat, lon) {
+  console.log(lat, lon, WEATHERBIT_API_KEY);
+  const currentWeather = `http://api.weatherbit.io/v2.0/forecast/daily?key=${WEATHERBIT_API_KEY}&lat=${lat}&lon=${lon}`;
+  let weatherResponse = await axios.get(`${currentWeather}`);
+  return weatherResponse.data;
+}
 
-app.get('/weather', (req, res) => {
-  const { lat, lon, searchQuery } = req.query;
-  if (!lat || !lon) {
-    return res.status(400).json({ error: 'Latitude (lat) and Longitude (lon) are required parameters.' });
-  }
-  const city = weatherData.find(item => item.lat === lat && item.lon === lon);
-  if (!city) {
-    return res.status(404).json({ error: 'City not found. Please provide valid lat and lon.' });
-  }
-  const forecastData = city.data.map(item => new Forecast(item.datetime, item.weather.description));
+function weatherApiData(weather) {
+  const forecastData = [];
 
-  res.json({ city: city.city_name, forecast: forecastData });
+  for (let i=0; i<weather.data.length; i++) {
+    const datetime = weather.data[i].datetime;
+    const atmosphere = weather.data[i].weather.description;
+    const lowTemp = weather.data[i].low_temp;
+    const highTemp = weather.data[i].high_temp;
+    // let weatherObject = weather.data[i].weather;
+    // console.log(weatherObject);
+    forecastData.push(new Forecast(`${datetime} It will be ${atmosphere} with a high of ${highTemp}, and low of ${lowTemp}`));
+  }
+  return forecastData;
+}
+app.get('/weather', async (req, res) => {
+  if (!req.query.lat || !req.query.lon) {
+    res.status(400).send('Please follow parameters');
+  } else {
+    try {
+      let weatherData = await locationWeather(req.query.lat, req.query.lon);
+      console.log(weatherData);
+      let apiWeatherForecast = weatherApiData(weatherData);
+      res.status(200).send(apiWeatherForecast);
+    } catch (error) {
+      console.log(error);
+      res.status(500).send('Error fetching weather data');
+    }
+  }
 });
 
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+  console.log('App running.');
 });
+

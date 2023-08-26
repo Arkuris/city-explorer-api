@@ -1,59 +1,61 @@
 'use strict';
 const axios = require('axios');
-const express = require('express');
-const dotenv = require('dotenv');
-const cors = require('cors');
+
+const MOVIE_API_KEY = process.env.MOVIE_API_KEY;
+// const express = require('express');
+// const dotenv = require('dotenv');
+// const cors = require('cors');
 // const movieData = require(`./data/weather.json`);
-dotenv.config();
-const PORT = process.env.PORT;
-const MOVIE_API_kEY = process.env.MOVIE_API_kEY;
-const app = express();
-app.use(cors());
+// dotenv.config();
+// const PORT = process.env.PORT;
+// const app = express();
+// app.use(cors());
 
 class Movie {
-  constructor(description, date) {
-    this.description = description;
-    this.date = date;
+  constructor(movieValue) {
+    this.title = movieValue.title;
+    this.overview = movieValue.overview;
+    this.average_votes = movieValue.vote_average;
+    this.total_votes = movieValue.vote_count;
+    this.image_url = movieValue.poster_path;
+    this.popularity = movieValue.popularity;
+    this.release_on = movieValue.release_date;
   }
 }
 
-async function movieCaller(lat, lon) {
-  console.log(lat, lon, MOVIE_API_kEY);
-  const currentMovie = `http://api.weatherbit.io/v2.0/movie/daily?key=${MOVIE_API_kEY}`;
-  let movieResponse = await axios.get(`${currentMovie}`);
-  return movieResponse.data;
-}
+function pullMovieData(movieData) {
+  const movieArray = [];
 
-function movieApiData(weather) {
-  const MovieData = [];
-
-  for (let i=0; i<movie.data.length; i++) {
-    const datetime = weather.data[i].datetime;
-    const atmosphere = weather.data[i].weather.description;
-    const lowTemp = weather.data[i].low_temp;
-    const highTemp = weather.data[i].high_temp;
-    // let weatherObject = weather.data[i].weather;
-    // console.log(weatherObject);
-    MovieData.push(new Movie(`${datetime} It will be ${atmosphere} with a high of ${highTemp}, and low of ${lowTemp}`));
-  }
-  return MovieData;
-}
-app.get('/movie', async (req, res) => {
-  if (!req.query.lat || !req.query.lon) {
-    res.status(400).send('Please follow parameters');
-  } else {
-    try {
-      let movieData = await movieCaller(req.query.lat, req.query.lon);
-      console.log(movieData);
-      let apiMovie =movieApiData(movieData);
-      res.status(200).send(apiMovie);
-    } catch (error) {
-      console.log(error);
-      res.status(500).send('Error fetching movie data');
+  for (let i = 0; i < movieData.length; i++) {
+    if (movieData[i].poster_path) {
+      let newMovieObject = new Movie({
+        title: movieData[i].original_title,
+        overview: movieData[i].overview,
+        average_votes: movieData[i].vote_average,
+        total_votes: movieData[i].vote_count,
+        image_url: `https://image.tmdb.org/t/p/w500${movieData[i].
+          poster_path}`
+      });
+      movieArray.push(newMovieObject);
     }
   }
-});
+  return movieArray;
+}
 
-app.listen(PORT, () => {
-  console.log('App running.');
-});
+const movieFunction = async (request, response) => {
+  let cityName = request.query.cityName;
+  console.log(cityName);
+  const movieApiUrl = `https://api.themoviedb.org/3/search/movie?query=${cityName}&api_key=${MOVIE_API_KEY}`;
+
+  try {
+    const rawMovieData = await axios.get(movieApiUrl);
+    let formattedMovies = pullMovieData(rawMovieData.data.results);
+    response.status(200).send(formattedMovies);
+  } catch (error) {
+    console.log(error);
+    response.status(500).send(`Rip. ${error}`);
+  }
+};
+// app.listen(PORT), () => console.log(`Listening on port ${PORT}.`);
+
+module.exports = movieFunction;

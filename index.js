@@ -6,10 +6,13 @@ const cors = require('cors');
 // const weatherData = require(`./data/weather.json`);
 dotenv.config();
 const PORT = process.env.PORT;
-const MOVIE_API_kEY = process.env.MOVIE_API_kEY;
+const MOVIE_API_KEY = process.env.MOVIE_API_KEY;
 const WEATHERBIT_API_KEY = process.env.WEATHERBIT_API_KEY;
+const movieScript = require('./movie.js');
 const app = express();
 app.use(cors());
+
+app.get('/movie', movieScript);
 
 class Forecast {
   constructor(description, date) {
